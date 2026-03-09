@@ -1,0 +1,1 @@
+bladegps.exe -e brdc0680.26n -l 52.37,4.90,0
