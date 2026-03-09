@@ -113,6 +113,9 @@
       <AdditionalLibraryDirectories>C:\Program Files\bladeRF\x64;D:\Libs\pThreads-win32-2-9-1-release\Pre-built.2\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>pthreadVC2.lib;bladeRF.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>copy /Y "D:\Libs\pThreads-win32-2-9-1-release\Pre-built.2\dll\x64\pthreadVC2.dll" "$(OutDir)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -131,6 +134,12 @@
       <AdditionalLibraryDirectories>C:\Program Files\bladeRF\x64;D:\Libs\pThreads-win32-2-9-1-release\Pre-built.2\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>pthreadVC2.lib;bladeRF.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>copy /Y "D:\Libs\pThreads-win32-2-9-1-release\Pre-built.2\dll\x64\pthreadVC2.dll" "$(OutDir)"
+copy /Y "C:\Program Files\bladeRF\x64\*.dll" "$(OutDir)"
+
+</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="bladegps.c" />
@@ -141,6 +150,9 @@
     <ClInclude Include="bladegps.h" />
     <ClInclude Include="getopt.h" />
     <ClInclude Include="gpssim.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="C:\Program Files\bladeRF\x64\bladeRF.dll" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
