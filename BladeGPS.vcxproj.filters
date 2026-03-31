@@ -37,9 +37,8 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="C:\Program Files\bladeRF\x64\bladeRF.dll" />
-    <None Include="Run.bat">
+    <CopyFileToFolders Include="Run.bat">
       <Filter>Source Files</Filter>
-    </None>
+    </CopyFileToFolders>
   </ItemGroup>
 </Project>
