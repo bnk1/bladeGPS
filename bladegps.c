@@ -10,6 +10,41 @@
 #endif
 
 /*
+ * Set to 1 to request a clean shutdown. Polled by tx_task so the program
+ * unwinds through main()'s normal bladerf_enable_module(false)/bladerf_close()
+ * path instead of being hard-killed (which leaves the bladeRF TX stream live
+ * in the FX3 firmware -> device stuck until physically reconnected).
+ */
+static volatile int g_quit = 0;
+
+/*
+ =======================================================================================================================
+ Watches stdin for a quit request from a parent/wrapper process.
+
+ The existing 'q' handler in gps_task() uses conio _kbhit()/_getch() on Windows,
+ which only read a real console -- unreachable when we are launched with a
+ redirected stdin pipe and no console window. This watcher reads the stdin pipe
+ directly, so the parent can request a graceful stop by writing 'q' (or 'Q'),
+ or simply by closing our stdin (getchar() then returns EOF).
+ =======================================================================================================================
+ */
+static void *
+stdin_quit_task (void *arg)
+{
+  int c;
+  (void) arg;
+
+  while ((c = getchar ()) != EOF)
+    {
+      if (c == 'q' || c == 'Q')
+        break;
+    }
+
+  g_quit = 1;
+  return NULL;
+}
+
+/*
  =======================================================================================================================
  =======================================================================================================================
  */
@@ -123,6 +158,13 @@ tx_task (void *arg)
 
   while (1)
     {
+      /* Honour a clean-shutdown request from the parent process. gps_task keeps
+       * feeding the FIFO, so we are never stuck in the cond_wait below and this
+       * is checked once per buffer (~13 ms). Exiting here lets main() disable
+       * the TX module and close the device cleanly. */
+      if (g_quit)
+        goto out;
+
       int16_t *tx_buffer_current = s->tx.buffer;
       unsigned int buffer_samples_remaining = SAMPLES_PER_BUFFER;
 
@@ -348,11 +390,11 @@ main (int argc, char *argv[])
           break;
 
         case 'a':
+          /* Take the gain as-is (in dB). It is clamped to the device's actual
+           * TX gain range below via bladerf_get_gain_range(). The original code
+           * forced this negative, which made positive gains from a 0..max UI
+           * collapse to the minimum; that negation is intentionally removed. */
           tx_gain = atoi (optarg);
-
-          if (tx_gain > 0)
-            tx_gain *= -1;
-
           break;
 
         case 'i':
@@ -591,9 +633,18 @@ main (int argc, char *argv[])
   else
     printf ("Creating TX task...\n");
 
+  /* Start the stdin watcher so a wrapping process can request a clean exit by
+   * sending 'q' or closing our stdin. Detached: we never join it; the process
+   * exit at the end of main() reaps it. */
+  {
+    pthread_t quit_thread;
+    if (pthread_create (&quit_thread, NULL, stdin_quit_task, NULL) == 0)
+      pthread_detach (quit_thread);
+  }
+
   /* Running... */
   printf ("Running...\n");
-  printf ("Press 'q' to quit.\n");
+  printf ("Press 'q' to quit (or send 'q' / close stdin from a parent process).\n");
 
   /* Wainting for TX task to complete. */
   pthread_join (s.tx.thread, NULL);
