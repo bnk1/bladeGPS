@@ -114,7 +114,8 @@
       <AdditionalDependencies>pthreadVC2.lib;bladeRF.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>copy /Y "D:\Libs\pThreads-win32-2-9-1-release\Pre-built.2\dll\x64\pthreadVC2.dll" "$(OutDir)"</Command>
+      <Command>copy /Y "D:\Libs\pThreads-win32-2-9-1-release\Pre-built.2\dll\x64\pthreadVC2.dll" "$(OutDir)"
+</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
