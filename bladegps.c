@@ -3,8 +3,7 @@
 
 /* for _getch used in Windows runtime. */
 #ifdef _WIN32
-  #include <conio.h>
-  #include "getopt.h"
+    #include "getopt.h"
 #else
   #include <unistd.h>
 #endif
@@ -12,6 +11,16 @@
 #include "gpssim.h"
 #include <string.h>
 #include <stdlib.h>
+#include <corecrt.h>
+#include <malloc.h>
+#include <math.h>
+#include <time.h>
+#include <Windows.h>
+#include <bladeRF1.h>
+#include <libbladeRF.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <pthread.h>
 
 /*
  * Set to 1 to request a clean shutdown. Polled by tx_task so the program
@@ -335,14 +344,16 @@ int main(int argc, char* argv[])
         break;
 
       case 'l':
+      {
         /* Static geodetic coordinates input mode ;
          * Added by scateu@gmail.com  */
         s.opt.nmeaGGA = FALSE;
         s.opt.staticLocationMode = TRUE;
-        sscanf(optarg, "%lf,%lf,%lf", &s.opt.llh[0], &s.opt.llh[1], &s.opt.llh[2]);
+        int v = sscanf(optarg, "%lf,%lf,%lf", &s.opt.llh[0], &s.opt.llh[1], &s.opt.llh[2]);
         s.opt.llh[0] /= R2D;  /* convert to RAD */
         s.opt.llh[1] /= R2D;  /* convert to RAD */
         break;
+      }
 
       case 'T':
         s.opt.timeoverwrite = TRUE;
@@ -362,14 +373,14 @@ int main(int argc, char* argv[])
           t0.mm = gmt->tm_min;
           t0.sec = (double)gmt->tm_sec;
           date2gps(&t0, &s.opt.g0);
-          break;
         }
+        break;
 
       case 't':
-        sscanf(optarg, "%d/%d/%d,%d:%d:%lf", &t0.y, &t0.m, &t0.d, &t0.hh, &t0.mm, &t0.sec);
+      {
+        int i = sscanf(optarg, "%d/%d/%d,%d:%d:%lf", &t0.y, &t0.m, &t0.d, &t0.hh, &t0.mm, &t0.sec);
 
-        if (t0.y <= 1980 || t0.m < 1 || t0.m > 12 || t0.d < 1 || t0.d > 31 || t0.hh < 0 || t0.hh > 23 || t0.mm < 0 || t0.mm > 59 || t0.sec < 0.0
-            || t0.sec >= 60.0)
+        if (i != 6 || t0.y <= 1980 || t0.m < 1 || t0.m > 12 || t0.d < 1 || t0.d > 31 || t0.hh < 0 || t0.hh > 23 || t0.mm < 0 || t0.mm > 59 || t0.sec < 0.0 || t0.sec >= 60.0)
         {
           printf("ERROR: Invalid date and time.\n");
           exit(1);
@@ -378,6 +389,7 @@ int main(int argc, char* argv[])
         t0.sec = floor(t0.sec);
         date2gps(&t0, &s.opt.g0);
         break;
+      }
 
       case 'd':
         duration = atof(optarg);
